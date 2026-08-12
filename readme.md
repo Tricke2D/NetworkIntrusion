@@ -42,22 +42,22 @@ NIDS mengatasi masalah ini dengan pendekatan unsupervised anomaly detection:
 │                    NIDS Pipeline                                │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  📡 Capture Packets    →  Sniff network traffic               │
+│  📡 Capture Packets    →  Sniff network traffic                 │
 │         │                                                       │
 │         ▼                                                       │
-│  🔗 Flow Aggregation   →  Group by 5-tuple (src/dst IP/port) │
+│  🔗 Flow Aggregation   →  Group by 5-tuple (src/dst IP/port)    │
 │         │                                                       │
 │         ▼                                                       │
-│  📊 Feature Extraction  →  Hitung fitur statistik per flow    │
+│  📊 Feature Extraction  →  Hitung fitur statistik per flow      │
 │         │                                                       │
 │         ▼                                                       │
-│  🎯 Anomaly Scoring    →  3 metode voting                     │
+│  🎯 Anomaly Scoring    →  3 metode voting                       │
 │         │                                                       │
 │         ▼                                                       │
-│  🚨 Alert Engine       →  Klasifikasi + deduplication         │
+│  🚨 Alert Engine       →  Klasifikasi + deduplication           │
 │         │                                                       │
 │         ▼                                                       │
-│  📱 Notification       →  Console + Slack                     │
+│  📱 Notification       →  Console + Slack                       │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -212,59 +212,59 @@ Sistem terdiri dari 3 lapisan utama:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                            NIDS SYSTEM                                     │
+│                            NIDS SYSTEM                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                     CAPTURE LAYER                                   │   │
-│  │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────┐  │   │
-│  │  │ PacketSniffer│───▶│ PacketParser │───▶│ FlowTable            │  │   │
-│  │  │ (Scapy)      │    │ (IP/TCP/UDP) │    │ (5-tuple grouping)   │  │   │
-│  │  └──────────────┘    └──────────────┘    └──────────────────────┘  │   │
-│  │                              │                    │                  │   │
-│  │                              ▼                    ▼                  │   │
-│  │                    ┌──────────────────────────────────────────┐     │   │
-│  │                    │ FlowTimeoutManager (background thread)   │     │   │
-│  │                    └──────────────────────────────────────────┘     │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                     CAPTURE LAYER                                   │    │
+│  │  ┌──────────────┐    ┌──────────────┐    ┌──────────────────────┐   │    │
+│  │  │ PacketSniffer│───▶│ PacketParser │───▶│ FlowTable           │   │    │
+│  │  │ (Scapy)      │    │ (IP/TCP/UDP) │    │ (5-tuple grouping)   │   │    │
+│  │  └──────────────┘    └──────────────┘    └──────────────────────┘   │    │
+│  │                              │                    │                 │    │
+│  │                              ▼                    ▼                 │    │
+│  │                    ┌──────────────────────────────────────────┐     │    │
+│  │                    │ FlowTimeoutManager (background thread)   │     │    │
+│  │                    └──────────────────────────────────────────┘     │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    │                                        │
 │                                    ▼                                        │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                     ANALYSIS LAYER                                  │   │
-│  │  ┌──────────────────────┐    ┌──────────────────────────────────┐  │   │
-│  │  │ FeatureExtractor     │───▶│ FeatureRepository (PostgreSQL)  │  │   │
-│  │  │ (Flow + Host level)  │    │                                  │  │   │
-│  │  └──────────────────────┘    └──────────────────────────────────┘  │   │
-│  │                              │                                      │   │
-│  │                              ▼                                      │   │
-│  │  ┌──────────────────────────────────────────────────────────────┐  │   │
-│  │  │ DetectionEngine (3 methods voting)                          │  │   │
-│  │  │  ┌────────────┐  ┌────────────┐  ┌─────────────────────┐   │  │   │
-│  │  │  │ Z-Score    │  │ Mahalanobis│  │ Isolation Forest    │   │  │   │
-│  │  │  │ Scorer     │  │ Scorer     │  │ Scorer              │   │  │   │
-│  │  │  └────────────┘  └────────────┘  └─────────────────────┘   │  │   │
-│  │  └──────────────────────────────────────────────────────────────┘  │   │
-│  │                              │                                      │   │
-│  │                              ▼                                      │   │
-│  │  ┌──────────────────────────────────────────────────────────────┐  │   │
-│  │  │ ModelRefreshManager (background, interval 120 detik)       │  │   │
-│  │  └──────────────────────────────────────────────────────────────┘  │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    │                                        │
-│                                    ▼                                        │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                     ALERT LAYER                                     │   │
-│  │  ┌──────────────────────┐    ┌──────────────────────────────────┐  │   │
-│  │  │ AlertClassifier      │───▶│ AlertCooldownTracker             │  │   │
-│  │  │ (PORT_SCAN/SYN_FLOOD │    │ (deduplication per 5 menit)     │  │   │
-│  │  │  BRUTE_FORCE/GENERIC)│    └──────────────────────────────────┘  │   │
-│  │  └──────────────────────┘                    │                      │   │
-│  │                              │               ▼                      │   │
-│  │  ┌──────────────────────┐    ┌──────────────────────────────────┐  │   │
-│  │  │ NotificationDispatcher│───▶│ AlertRepository (PostgreSQL)    │  │   │
-│  │  │  (Console + Slack)   │    └──────────────────────────────────┘  │   │
-│  │  └──────────────────────┘                                          │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                     ANALYSIS LAYER                                  │    │
+│  │  ┌──────────────────────┐    ┌──────────────────────────────────┐   │    │
+│  │  │ FeatureExtractor     │───▶│ FeatureRepository (PostgreSQL)  │    │   │
+│  │  │ (Flow + Host level)  │    │                                  │   │    │
+│  │  └──────────────────────┘    └──────────────────────────────────┘   │    │
+│  │                              │                                      │    │
+│  │                              ▼                                      │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ DetectionEngine (3 methods voting)                           │   │    │
+│  │  │  ┌────────────┐  ┌────────────┐  ┌─────────────────────┐     │   │    │
+│  │  │  │ Z-Score    │  │ Mahalanobis│  │ Isolation Forest    │     │   │    │
+│  │  │  │ Scorer     │  │ Scorer     │  │ Scorer              │     │   │    │
+│  │  │  └────────────┘  └────────────┘  └─────────────────────┘     │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  │                              │                                      │    │
+│  │                              ▼                                      │    │
+│  │  ┌──────────────────────────────────────────────────────────────┐   │    │
+│  │  │ ModelRefreshManager (background, interval 120 detik)         │   │    │
+│  │  └──────────────────────────────────────────────────────────────┘   │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                 │                                           │
+│                                 ▼                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                     ALERT LAYER                                     │    │
+│  │  ┌──────────────────────┐    ┌──────────────────────────────────┐   │    │
+│  │  │ AlertClassifier      │───▶│ AlertCooldownTracker            │   │     │
+│  │  │ (PORT_SCAN/SYN_FLOOD │    │ (deduplication per 5 menit)      │   │    │
+│  │  │  BRUTE_FORCE/GENERIC)│    └──────────────────────────────────┘   │    │
+│  │  └──────────────────────┘                    │                      │    │
+│  │                              │               ▼                      │    │
+│  │  ┌──────────────────────┐    ┌──────────────────────────────────┐   │    │
+│  │  │ NotificationDispatcher│───▶│ AlertRepository (PostgreSQL)   │   │    │
+│  │  │  (Console + Slack)   │    └──────────────────────────────────┘   │    │
+│  │  └──────────────────────┘                                           │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -285,43 +285,43 @@ Sistem terdiri dari 3 lapisan utama:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         INTERNAL DATA FLOW                                 │
+│                         INTERNAL DATA FLOW                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  Packet (Scapy)                                                            │
+│  Packet (Scapy)                                                             │
 │         │                                                                   │
 │         ▼                                                                   │
-│  parse_packet() → PacketInfo (src_ip, dst_ip, src_port, dst_port, flags)   │
+│  parse_packet() → PacketInfo (src_ip, dst_ip, src_port, dst_port, flags)    │
 │         │                                                                   │
 │         ▼                                                                   │
-│  FlowTable.ingest() → Group by 5-tuple                                     │
+│  FlowTable.ingest() → Group by 5-tuple                                      │
 │         │                                                                   │
-│         ├── New flow → HostActivityTracker.register_connection_attempt()   │
+│         ├── New flow → HostActivityTracker.register_connection_attempt()    │
 │         │                                                                   │
-│         ├── Existing flow → FlowState.register_packet()                    │
+│         ├── Existing flow → FlowState.register_packet()                     │
 │         │                                                                   │
-│         └── FIN/RST → _close_flow() → callback                             │
-│                                                                             │
+│         └── FIN/RST → _close_flow() → callback                              │
+│         │                                                                     │
 │         ▼                                                                   │
 │  handle_flow_closed():                                                      │
-│    1. FlowRepository.save(flow) → PostgreSQL (flows table)                 │
-│    2. extract_flow_features() → FlowFeatures                               │
-│    3. FeatureRepository.save() → PostgreSQL (flow_features table)          │
-│    4. detection_engine.evaluate() → CompositeVerdict                       │
-│                                                                             │
+│    1. FlowRepository.save(flow) → PostgreSQL (flows table)                  │
+│    2. extract_flow_features() → FlowFeatures                                │
+│    3. FeatureRepository.save() → PostgreSQL (flow_features table)           │
+│    4. detection_engine.evaluate() → CompositeVerdict                        │
+│         │                                                                     │
 │         ▼                                                                   │
-│  DetectionEngine.evaluate():                                               │
-│    1. ZScoreScorer.score() → z-score per feature, vote                     │
-│    2. MahalanobisScorer.score() → distance, vote                           │
-│    3. IsolationForestScorer.score() → decision function, vote              │
-│    4. Vote count ≥ 2 → is_anomaly = True                                  │
-│                                                                             │
+│  DetectionEngine.evaluate():                                                │
+│    1. ZScoreScorer.score() → z-score per feature, vote                      │
+│    2. MahalanobisScorer.score() → distance, vote                            │
+│    3. IsolationForestScorer.score() → decision function, vote               │
+│    4. Vote count ≥ 2 → is_anomaly = True                                    │
+│         │                                                                     │
 │         ▼                                                                   │
 │  AlertEngine:                                                               │
-│    1. classify_alert() → alert_type, severity                              │
-│    2. cooldown_tracker.should_trigger() → check dedup                      │
-│    3. AlertRepository.save() → PostgreSQL (alerts table)                   │
-│    4. notification_dispatcher.dispatch() → Console + Slack                │
+│    1. classify_alert() → alert_type, severity                               │
+│    2. cooldown_tracker.should_trigger() → check dedup                       │
+│    3. AlertRepository.save() → PostgreSQL (alerts table)                    │
+│    4. notification_dispatcher.dispatch() → Console + Slack                  │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -482,11 +482,11 @@ python scripts/traffic_generator_portscan.py
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Traffic Generator: SYN packet ke port 1-50 dalam <1 detik    │
+│  Traffic Generator: SYN packet ke port 1-50 dalam <1 detik      │
 ├─────────────────────────────────────────────────────────────────┤
-│  Source IP: 127.0.0.1                                          │
-│  Destination IP: 127.0.0.1                                     │
-│  Pattern: 50 unique destination ports in 0.5 detik            │
+│  Source IP: 127.0.0.1                                           │
+│  Destination IP: 127.0.0.1                                      │
+│  Pattern: 50 unique destination ports in 0.5 detik              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -494,19 +494,19 @@ python scripts/traffic_generator_portscan.py
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Detection Engine Evaluation                                   │
+│  Detection Engine Evaluation                                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  Flow ID: 1105                                                  │
 │  Source IP: 127.0.0.1                                           │
 │  Destination Port: Various (1-50)                               │
 │  Unique Destination Ports: 28                                   │
 │                                                                 │
-│  Z-Score:       36.786 (2 features exceeding threshold)        │
-│  Mahalanobis:   23.1624 (threshold > 3.5)                     │
-│  Isolation Forest: -0.144 (threshold < -0.1)                  │
+│  Z-Score:       36.786 (2 features exceeding threshold)         │
+│  Mahalanobis:   23.1624 (threshold > 3.5)                       │
+│  Isolation Forest: -0.144 (threshold < -0.1)                    │
 │                                                                 │
 │  Votes: Z-Score ✅ Mahalanobis ✅ Isolation Forest ✅          │
-│  Result: ANOMALY                                               │
+│  Result: ANOMALY                                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -514,13 +514,13 @@ python scripts/traffic_generator_portscan.py
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ALERT #5 [MEDIUM] PORT_SCAN                                   │
+│  ALERT #5 [MEDIUM] PORT_SCAN                                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  Source: 127.0.0.1                                              │
-│  Type: PORT_SCAN                                               │
-│  Severity: MEDIUM                                              │
-│  Detail: votes=2/3, unique_ports=28, zscore_max=1000000000.0 │
-│  Triggered at: 2026-08-12 21:27:17                            │
+│  Type: PORT_SCAN                                                │
+│  Severity: MEDIUM                                               │
+│  Detail: votes=2/3, unique_ports=28, zscore_max=1000000000.0    │
+│  Triggered at: 2026-08-12 21:27:17                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -820,7 +820,7 @@ docker exec -it nids-postgres psql -U nids_user -d nids_db -c "\dt"
 ### Development Workflow
 
 1. Fork repository
-2. Clone fork: `git clone https://github.com/your-username/nids.git`
+2. Clone fork: `git clone https://github.com/Tricke2D/nids.git`
 3. Create branch: `git checkout -b feature/your-feature`
 4. Make changes dan commit: `git commit -m "Description"`
 5. Push: `git push origin feature/your-feature`
@@ -859,7 +859,7 @@ make test lint format
 
 MIT License
 
-Copyright (c) 2026 [Your Name]
+Copyright (c) 2026 [Muhamad Syukron Zakka]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -874,10 +874,10 @@ furnished to do so, subject to the following conditions...
 
 ## 👨‍💻 Author
 
-**Your Name**
+Muhamad Syukron Zakka
 
-- GitHub: @your-username
-- LinkedIn: Your LinkedIn
+- GitHub: @Tricke2D
+- LinkedIn: mhdsyukronzakka
 
 ---
 
