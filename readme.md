@@ -301,21 +301,21 @@ Sistem terdiri dari 3 lapisan utama:
 │         ├── Existing flow → FlowState.register_packet()                     │
 │         │                                                                   │
 │         └── FIN/RST → _close_flow() → callback                              │
-│         │                                                                     │
+│         │                                                                   │
 │         ▼                                                                   │
 │  handle_flow_closed():                                                      │
 │    1. FlowRepository.save(flow) → PostgreSQL (flows table)                  │
 │    2. extract_flow_features() → FlowFeatures                                │
 │    3. FeatureRepository.save() → PostgreSQL (flow_features table)           │
 │    4. detection_engine.evaluate() → CompositeVerdict                        │
-│         │                                                                     │
+│         │                                                                   │
 │         ▼                                                                   │
 │  DetectionEngine.evaluate():                                                │
 │    1. ZScoreScorer.score() → z-score per feature, vote                      │
 │    2. MahalanobisScorer.score() → distance, vote                            │
 │    3. IsolationForestScorer.score() → decision function, vote               │
 │    4. Vote count ≥ 2 → is_anomaly = True                                    │
-│         │                                                                     │
+│         │                                                                   │
 │         ▼                                                                   │
 │  AlertEngine:                                                               │
 │    1. classify_alert() → alert_type, severity                               │
